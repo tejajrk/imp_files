@@ -50,3 +50,171 @@ docker stats centos(show top kind of information on centos)
 docker cp centos:/etc/hosts /root/ (copy something from container to host)
 docker exec centos cat /etc/hosts (Run command inside a container)
 docker kill centos (Kill a container)
+
+
+docker run --name demo1 centos:latest dd if=/dev/zero of=/dev/null
+
+ctrl+p then ctrl+q 
+
+Use the above key sequence to disconnect from the container without stopping it.
+
+docker inspect <container_name> 
+above command gives you the JSON output with the properties used while creating the container
+
+docker inspect -f '{{ .NetworkSettings.IPAddress }}' eloquent_poincare
+
+teja@ubuntu:~$ docker inspect -f '{{ .NetworkSettings.IPAddress }}' eloquent_poincare
+172.17.0.2
+
+Above command is an example for using filter on inspect.
+
+
+docker save <image> (to save an image as tarball)
+docker load <image_tar> (to load image from a tarball)
+
+docker run <container> (starts the image)
+docker commit (commits the changes made in container to image)
+
+docker pause <container> (To Pause a container)
+docker unpause <container> (To unpause a container)
+
+docker stop <container> ( to stop the container. WIll still be available in the list of containers but won't use any resources. It It will be available for start)
+docker start <container> (If it is in the container list you can start)
+
+docker rm <container> (To remove kernel state. Will loose everything. If you have commited the changes to image, then you can resume)
+
+
+Networking
+===========
+docker network bridge. This bridge is making it possible for connections from outside world.
+On a same host containers can use docker bridge networking.
+Between containers on different hosts, there is no direct networking.
+They have to use overlay networking
+
+AS bridge uses NAT containers are not directly accessble from outside.
+
+port mapping can be used for exposing container ports to external network.
+
+docker run -d --name httpd -p 8080:80 httpd
+
+docker run -d --name httpd2 -p 192.168.1.150:8080:80 httpd (-d for daemonizing a process)
+
+teja@ubuntu:~$ docker run -d --name httpd -p 8080:80 httpd
+Unable to find image 'httpd:latest' locally
+latest: Pulling from library/httpd
+6ae821421a7d: Pull complete
+0ceda4df88c8: Pull complete
+24f08eb4db68: Pull complete
+ddf4fc318081: Pull complete
+fc5812428ac0: Pull complete
+Digest: sha256:5e7992fcdaa214d5e88c4dfde274befe60d5d5b232717862856012bf5ce31086
+Status: Downloaded newer image for httpd:latest
+d34dce4755dbcad696aaefd08e820b5c1fb8125f90f2ce9152d45c91521d6989
+
+
+
+teja@ubuntu:~$ curl http://localhost:8080
+<html><body><h1>It works!</h1></body></html>
+
+
+Storage:
+=========
+Container storage is by default ephemeral(gone after restart)
+
+Host directory is an easy way for persistent storage.
+
+teja@ubuntu:~$ sudo mkdir /var/local/mysql
+teja@ubuntu:~$ sudo chown -R 27:27 /var/local/mysql
+teja@ubuntu:~$ docker pull mariadb
+Using default tag: latest
+latest: Pulling from library/mariadb
+6cf436f81810: Pull complete
+987088a85b96: Pull complete
+b4624b3efe06: Pull complete
+d42beb8ded59: Pull complete
+5badffea4c42: Pull complete
+6107652a946b: Pull complete
+1b31669dbe65: Pull complete
+4d884b22dc63: Pull complete
+cee72f2b293c: Pull complete
+33323ef67397: Pull complete
+1b364bf6e762: Pull complete
+eda57ae34af9: Pull complete
+91a937195033: Pull complete
+6f468316f752: Pull complete
+Digest: sha256:4b5f7db5d62214a2d788fcff3023a74e57fef6111590f8a11940b2849eab765a
+Status: Downloaded newer image for mariadb:latest
+
+option -e is used for setting environment variable.
+
+teja@ubuntu:~$ docker run --name mariadb -d -v /var/local/mysql:/var/lib/mysql -e MYSQL_USER=user -e MYSQL_PASSWORD=password -e MYSQL_DATABASE=addresses -e MYSQL_ROOT_PASSWORD=password mariadb
+79fc81aad0cbe12661af97a489ac14fe9bb2c82d937cf4f34d4470e6708f794f
+teja@ubuntu:~$
+teja@ubuntu:~$ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                  NAMES
+79fc81aad0cb        mariadb             "docker-entrypoint.s…"   5 seconds ago       Up 4 seconds        3306/tcp               mariadb
+d34dce4755db        httpd               "httpd-foreground"       10 minutes ago      Up 10 minutes       0.0.0.0:8080->80/tcp   httpd
+2d5412a37389        centos              "/bin/bash"              About an hour ago   Up About an hour                           eloquent_poincare
+
+teja@ubuntu:~$ ls -lrt /var/local/mysql/
+total 122940
+-rw-rw---- 1 999 sudo 50331648 Feb 24 10:37 ib_logfile1
+drwx--S--- 2 999 sudo     4096 Feb 24 10:37 performance_schema
+-rw-rw---- 1 999 sudo        0 Feb 24 10:37 multi-master.info
+drwx------ 2 999 sudo     4096 Feb 24 10:37 mysql
+drwx--S--- 2 999 sudo     4096 Feb 24 10:37 addresses
+-rw-rw---- 1 999 sudo      976 Feb 24 10:37 ib_buffer_pool
+-rw-rw---- 1 999 sudo 12582912 Feb 24 10:37 ibdata1
+-rw-rw---- 1 999 sudo       52 Feb 24 10:37 aria_log_control
+-rw-rw---- 1 999 sudo    16384 Feb 24 10:37 aria_log.00000001
+-rw-rw---- 1 999 sudo    24576 Feb 24 10:37 tc.log
+-rw-rw---- 1 999 sudo 50331648 Feb 24 10:37 ib_logfile0
+-rw-rw---- 1 999 sudo 12582912 Feb 24 10:37 ibtmp1
+
+teja@ubuntu:~$ docker exec -it mariadb /bin/bash
+root@79fc81aad0cb:/# ls -lrt /var/lib/mysql/
+total 122940
+-rw-rw---- 1 mysql sudo 50331648 Feb 24 18:37 ib_logfile1
+drwx--S--- 2 mysql sudo     4096 Feb 24 18:37 performance_schema
+-rw-rw---- 1 mysql sudo        0 Feb 24 18:37 multi-master.info
+drwx------ 2 mysql sudo     4096 Feb 24 18:37 mysql
+drwx--S--- 2 mysql sudo     4096 Feb 24 18:37 addresses
+-rw-rw---- 1 mysql sudo      976 Feb 24 18:37 ib_buffer_pool
+-rw-rw---- 1 mysql sudo 12582912 Feb 24 18:37 ibdata1
+-rw-rw---- 1 mysql sudo       52 Feb 24 18:37 aria_log_control
+-rw-rw---- 1 mysql sudo    16384 Feb 24 18:37 aria_log.00000001
+-rw-rw---- 1 mysql sudo    24576 Feb 24 18:37 tc.log
+-rw-rw---- 1 mysql sudo 50331648 Feb 24 18:37 ib_logfile0
+-rw-rw---- 1 mysql sudo 12582912 Feb 24 18:37 ibtmp1
+
+Note: If you run into issues like below
+
+ls: cannot open directory /test: Permission denied
+
+try Setting SELinux mode as permissive by running below command
+setenforce 0
+
+or run docker command in privileged mode.
+
+docker run --name mariadb --privileged - -d -v /var/local/mysql:/var/lib/mysql -e MYSQL_USER=user -e MYSQL_PASSWORD=password -e MYSQL_DATABASE=addresses -e MYSQL_ROOT_PASSWORD=password mariadb
+docker run --privileged -v /root:/test --rm -it debian ls /test
+
+
+teja@ubuntu:~$ docker run -dit --name mynginx -p 8089:80 nginx:latest /bin/bash
+Unable to find image 'nginx:latest' locally
+latest: Pulling from library/nginx
+6ae821421a7d: Already exists
+da4474e5966c: Pull complete
+eb2aec2b9c9f: Pull complete
+Digest: sha256:dd2d0ac3fff2f007d99e033b64854be0941e19a2ad51f174d9240dda20d9f534
+Status: Downloaded newer image for nginx:latest
+df2303dc1d6d318a9c4a55163ca1edfa9c0ef688157628a8e125f6d6a7635a9d
+
+teja@ubuntu:~$ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                  NAMES
+df2303dc1d6d        nginx:latest        "/bin/bash"              55 seconds ago      Up 53 seconds       0.0.0.0:8089->80/tcp   mynginx
+
+teja@ubuntu:~$ docker attach mynginx
+root@df2303dc1d6d:/# ps auxww
+bash: ps: command not found
+root@df2303dc1d6d:/#
