@@ -1,0 +1,52 @@
+docker run name mywls  -p 7001:7001 opavlova/weblogic:12.2.1
+
+docker info
+docker search
+docker run -it imagename (interactive terminal)
+
+docker ps (list of active containers)
+docker ps -a (list of all containers including inactive)
+docker image ls (list of images)
+
+docker kill <container_name> (not image name)
+
+
+Dockerd(service)
+docker (command)
+docker REST API
+
+docker registry (eg: docker hub)
+
+docker pull image  (to download)
+docker push image (to push image to registry)
+
+
+
+Custom images are created from base image
+
+Images can be created using dockerfile
+each instruction in the dockerfile is a layer on top of the image
+
+Container : Is a runnable instance of image
+Containers also need persistent storage to keep the modifications
+
+services: Used in docker swarm to scale multiple containers across different docker daemons
+
+
+
+docker version (To know the current version)
+docker info (To know the usage information)
+docker search wordpress (searching for a available images in registry)
+docker pull wordpress (Pulling an image from registry)
+docker images (listing the local images - pulled or created)
+docker rmi wordpress(To remove an image)
+docker run -dit --name centos --hostname='centos' centos /bin/bash (Running a container in detatched interactive mode)
+docker ps -a (To verify a running container)
+docker attach centos (to attatch a container which is in detatched mode)
+docker run centos /usr/bin/free -m (running a command on container)
+docker run -rm centos /usr/bin/df -h (deleting the container right after running the command on container)
+docker top centos (Show information about running container)
+docker stats centos(show top kind of information on centos)
+docker cp centos:/etc/hosts /root/ (copy something from container to host)
+docker exec centos cat /etc/hosts (Run command inside a container)
+docker kill centos (Kill a container)
